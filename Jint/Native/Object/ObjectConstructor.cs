@@ -386,6 +386,19 @@ namespace Jint.Native.Object
             var enumerableProperties = o.GetOwnProperties()
                 .Where(x => x.Value.Enumerable.HasValue && x.Value.Enumerable.Value)
                 .ToArray();
+
+            var clrObject = oArg.ToObject();
+            var clrType = clrObject.GetType();
+            if (clrType.IsGenericType() && clrType.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+            {
+                var dictionaryKeys = new List<KeyValuePair<string, PropertyDescriptor>>();
+                foreach (var prop in clrObject as IDictionary<string, object>)
+                {
+                    dictionaryKeys.Add(new KeyValuePair<string, PropertyDescriptor>(prop.Key, new PropertyDescriptor(null, false, true, false)));
+                }
+                enumerableProperties = dictionaryKeys.ToArray();
+            }
+
             var n = enumerableProperties.Length;
             var array = Engine.Array.Construct(new JsValue[] {n});
             var index = 0;
